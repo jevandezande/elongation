@@ -1,0 +1,17 @@
+# swap files
+*.swp
+
+# Compiled python
+*.pyc
+__pycache__
+
+# PyCharm directories
+.idea
+
+# Windows files
+desktop.ini
+
+# Build
+build/
+dist/
+*.egg-info
