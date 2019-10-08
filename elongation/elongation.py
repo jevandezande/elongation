@@ -12,6 +12,10 @@ class Elongation:
         self.y_units = y_units
         self.__dict__ = {**other, **self.__dict__}
 
+    def __eq__(self, other):
+        return all(self.xs == other.xs) and all(self.ys == other.ys) \
+            and self.x_units == other.x_units and self.y_units == other.y_units
+
     def write(self, file_name):
         xs, ys = self.xs, self.ys
         extension = file_name.split('.')[-1]
