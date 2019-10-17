@@ -283,6 +283,31 @@ def try_to_num(in_str):
     return in_str
 
 
+def compare_dictionaries(dict1, dict2):
+    """
+    Compare two dictionaries
+
+    :return: True if the same, False if not
+    """
+    if len(dict1) != len(dict2):
+        return False
+
+    for key in dict1:
+        try:
+            val1, val2 = dict1[key], dict2[key]
+            if val1 != val2:  # different values
+                return False
+        except KeyError:  # different keys
+            return False
+        except ValueError:  # non-comparable types
+            if isinstance(val1, dict):
+                if not compare_dictionaries(val1, val2):
+                    return False
+            elif any(val1 != val2):  # Compare all values
+                return False
+    return True
+
+
 if __name__ == "__main__":
     elongs = read_prn('../test/test_files/test1.prn')
     elongs = read_elongation('../test/test_files/test1.prn')
