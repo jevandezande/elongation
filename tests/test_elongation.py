@@ -26,6 +26,11 @@ def test_write_prn(tmp_path):
     elongs[0].write(outfile)
 
 
+def test_cross_section():
+    elong = read_prn('tests/test_files/test1.prn')[0]
+    assert elong.cross_section == 1
+
+
 def test_modulus():
     elongs = read_prn('tests/test_files/test1.prn')
     assert elongs[0].modulus == 1
@@ -37,6 +42,8 @@ def test_eq():
         'break_strength': 12.3,
         'crosshead_speed': 123.4,
         'gauge_length': 123.45,
+        'sample_width': 9,
+        'sample_thickness': 10,
         'yield_strength': 1234.5,
         'yield_load': 12346.7,
         'a': np.array([1, 0, 10])
@@ -47,6 +54,8 @@ def test_eq():
         'break_strength': 12.3,
         'crosshead_speed': 123.4,
         'gauge_length': 123.45,
+        'sample_width': 9,
+        'sample_thickness': 10,
         'gauge_length': 123.45,
         'yield_strength': 1234.5,
         'yield_load': 12346.7,

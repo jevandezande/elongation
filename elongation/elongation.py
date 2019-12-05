@@ -19,10 +19,12 @@ class Elongation:
         self.ys = ys
         self.y_units = y_units
         self.break_load = other['break_load']
-        self.break_elongation = other['break_elongation']
+        self.break_elongation = other['break_elongation']  # %
         self.break_strength = other['break_strength']
-        self.crosshead_speed = other['crosshead_speed']
-        self.gauge_length = other['gauge_length']
+        self.crosshead_speed = other['crosshead_speed']  # mm/min
+        self.gauge_length = other['gauge_length']  # mm
+        self.sample_width = other['sample_width']  # mm
+        self.sample_thickness = other['sample_thickness']  # mm
         self.yield_strength = other['yield_strength']
         self.yield_load = other['yield_load']
         self.data = other
@@ -94,6 +96,13 @@ class Elongation:
 
         return modulus
 
+    @property
+    def cross_section(self):
+        """
+        Cross sectional area of the material.
+        """
+        return self.sample_thickness*self.sample_width
+
     def derivative(self, units='N/m'):
         """
         Take the derivative of the curve, first converts to the corresponding units.
@@ -103,7 +112,7 @@ class Elongation:
         """
         if units == 'N/m':
             assert (self.x_units == 'm') and (self.y_units == 'N')
-            return np.diff(self.y)/np.diff(self.x)
+            return np.diff(self.y)/np.diff(self.x)  # N/L·ΔL
 
     def cropped(self, start, end):
         """
@@ -183,6 +192,8 @@ Break Strength, {break_strength}
 Break Elongation, {break_elongation}
 Crosshead Speed, {crosshead_speed}
 Gauge Length, {gauge_length}
+Sample Width, {sample_width}
+Sample Thickness, {sample_thickness}
 Yield Strength, {yield_strength}
 Yield Load, {yield_load}
 
