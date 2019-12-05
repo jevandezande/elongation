@@ -15,3 +15,6 @@ desktop.ini
 build/
 dist/
 *.egg-info
+
+# Test
+.coverage

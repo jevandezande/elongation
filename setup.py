@@ -2,13 +2,13 @@ import setuptools
 
 
 def readme():
-    with open('README.rst') as f:
+    with open('README.md') as f:
         return f.read()
 
 
 setuptools.setup(
     name='Elongation',
-    version='0.1',
+    version='0.2',
     description='Package for managing elongation data.',
     long_description=readme(),
     classifiers=[
@@ -21,7 +21,7 @@ setuptools.setup(
     author_email='jevandezande@gmail.com',
     license='MIT',
     python_requires='>=3.6',
-    install_requires=['numpy'],
+    setup_requires=['wheel'],
+    install_requires=['numpy', 'more_itertools'],
     tests_require=['pytest'],
-    scripts=['bin/convert_elongation'],
 )

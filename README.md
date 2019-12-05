@@ -1,6 +1,8 @@
 Elongation
 ==========
 
+[![CircleCI](https://circleci.com/gh/jevandezande/elongation.svg?style=svg)](https://circleci.com/gh/jevandezande/elongation)
+
 Package for managing data from elongation machines.
 
 
