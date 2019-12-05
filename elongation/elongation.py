@@ -9,29 +9,43 @@ class Elongation:
     def __init__(self, xs, ys, x_units, y_units, **other):
         """
         Container for elongation data
+        :param xs: x-values (elongation)
+        :param ys: y-values (force)
+        :param x_units, y_units: units for x and y
+        :param **other: other data to be saved
         """
         self.xs = xs
         self.x_units = x_units
         self.ys = ys
         self.y_units = y_units
+        self.break_load = other['break_load']
+        self.break_elongation = other['break_elongation']
+        self.break_strength = other['break_strength']
+        self.crosshead_speed = other['crosshead_speed']
+        self.gauge_length = other['gauge_length']
+        self.yield_strength = other['yield_strength']
+        self.yield_load = other['yield_load']
         self.data = other
-        self.break_load = self.data['break_load']
-        self.break_elongation = self.data['break_elongation']
-        self.break_strength = self.data['break_strength']
-        self.crosshead_speed = self.data['crosshead_speed']
-        self.gauge_length = self.data['gauge_length']
-        self.yield_strength = self.data['yield_strength']
-        self.yield_load = self.data['yield_load']
 
     def __eq__(self, other):
+        """
+        Check if two elongation objects are equivalent.
+
+        :param other: other Elongation objects to compare to
+        """
         compare_dictionaries(self.data, other.data)
 
         return all(self.xs == other.xs) and all(self.ys == other.ys) \
             and self.x_units == other.x_units and self.y_units == other.y_units
 
-    def write(self, file_name):
-        extension = file_name.split('.')[-1]
-        write_elongation(self, file_name)
+    def write(self, file_name, style=None):
+        """
+        Write elongation object to file.
+
+        :param file_name: file to write to.
+        :param style: format to write to (guesses based on file extension if None)
+        """
+        write_elongation(self, file_name, style=style)
 
     def convert_x_units(self, to, factor):
         """
@@ -59,10 +73,16 @@ class Elongation:
         self.yield_load *= factor
 
     def convert_x_units_to_strain(self):
+        """
+        Convert the x_units to strain (ΔL/L).
+        """
+        factor = None
         if self.x_units == 'strain':
             return
         elif self.x_units in ['seconds', 'Secs.']:
             factor = self.crosshead_speed / self.gauge_length
+        elif self.x_units in ['mm', 'cm', 'm', 'in', 'ft']:
+            factor = 1 / self.gauge_length
         else:
             raise NotImplementedError(f'Converting from {self.x_units} to strain is no yet implemented.')
 
@@ -129,17 +149,19 @@ class Elongation:
         return self.cropped_index(start_i, end_i)
 
 
-def write_elongation(elongation, file_name):
+def write_elongation(elongation, file_name, style=None):
     """
     Write Elongation object to file.
 
     :param: Elongation object
     :param file_name: name of the file to be written to
+    :param style: format to write to (guesses based on file extension if None)
     """
-    extension = file_name.split('.')[-1]
-    if extension == 'csv':
+    style = file_name.split('.')[-1] if style is None else style
+
+    if style == 'csv':
         write_csv(elongation, file_name)
-    elif extension == 'prn':
+    elif style == 'prn':
         write_prn(elongation, file_name)
     else:
         raise NotImplementedError()
