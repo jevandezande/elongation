@@ -31,102 +31,7 @@ class Elongation:
 
     def write(self, file_name):
         extension = file_name.split('.')[-1]
-        with open(file_name, 'w') as f:
-            if extension == 'csv':
-                f.write("""\
-Thickness, {thickness}
-Break Load, {break_load}
-Break Strength, {break_strength}
-Break Elongation, {break_elongation}
-Crosshead Speed, {crosshead_speed}
-Gauge Length, {gauge_length}
-Yield Strength, {yield_strength}
-Yield Load, {yield_load}
-
-Points
-{x_units},   {y_units}
-""".format(x_units=self.x_units, y_units=self.y_units, **self.data))
-                for x, y in zip(self.xs, self.ys):
-                    f.write(f'{x:>8.4f}, {y:>8.4f}\n')
-            if extension == 'prn':
-                f.write("""prn:13|
-subtype = MT2500
-Doc={MT2500:14|
-  Film={12.1|
-""" +
-"""\
-    Test_Mode = {Test_Mode}
-    Setup_Name = {Setup_Name}
-    Unit_System = {Unit_System}
-    Graph_Mode = {Graph_Mode}
-    Sample_Length = {Sample_Length}
-    CrossheadVlcty = {CrossheadVlcty}
-    VelocityUnitId = {VelocityUnitId}
-    CrossheadSpeed = {CrossheadSpeed}
-    Loadcell_Mode = {Loadcell_Mode}
-    Loadcell_Type = {Loadcell_Type}
-    Start_Threshold = {Start_Threshold}
-    Stop_Threshold = {Stop_Threshold}
-    Auto_Stop = {Auto_Stop}
-    Auto_Return = {Auto_Return}
-    ExtnsnResetOnStart = {ExtnsnResetOnStart}
-    Yield_Type = {Yield_Type}
-    COF_Sled_Load = {COF_Sled_Load}
-    }}
-""".format(**self.data['film_data']) +
-"""\
-  Test_Info={{2|
-    Color = {Color}
-    Order_Id = {Order_Id}
-    Technician = {Technician}
-    Test_Method = {Test_Method}
-    Sample_Conditioning = {Sample_Conditioning}
-    Test_Conditions = {Test_Conditions}
-    Product_Name = {Product_Name}
-    Test_Direction = {Test_Direction}
-    }}
-""".format(**self.data['test_info']) +
-"""\
-  Test_Data=(
-    {{6|
-      Crosshead_speed = {crosshead_speed}
-      X_unit = {x_units}
-      Y_unit = {y_units}
-      Sample_Thkness = {sample_thickness}
-      Sample_Width = {sample_width}
-      Grip_Separation = {gauge_length}
-      Start_Threshhold = {start_threshhold}
-      Stop_Threshhold = {stop_threshhold}
-      Number_Of_Points = {number_of_points}
-      Points = [""".format(number_of_points=len(self.xs), x_units=self.x_units, y_units=self.y_units, **self.data) +
-''.join(f'   {x:> 8.4f}, {y:> 8.4f}\n' for x, y in zip(self.xs, self.ys)) +
-"""\
-         ]
-      }},
-    )
-  Test_Results=(
-    {{6|
-      TestDate = {date}
-      Length_Cnvrsn = {length_conversion}
-      Force_Cnvrsn = {force_conversion}
-      LoadCell_Capacity = {loadcell_capacity}
-      LoadCell_CpctyUnit = {loadcell_capacity_unit}
-      LoadCell_BitsOfReso = {loadcell_bits_of_resolution}
-      Analysis={{ATensile:1|
-        Slack_time = {slack_time}
-        SampleThickness = {sample_thickness}
-        BreakLoad = {break_load}
-        BreakStrength = {break_strength}
-        BreakElongation = {break_elongation}
-        BreakPctElongation = {break_percent_elongation}
-        YieldStrength1 = {yield_strength}
-        YieldLoad1 = {yield_load}
-        }}
-      }},
-    )
-  }}
-""".format(**self.data)
-)
+        write_elongation(self, file_name)
 
     def convert_x_units(self, to, factor):
         """
@@ -222,6 +127,136 @@ Doc={MT2500:14|
         end_i = bisect(self.ys, 0.25*max_y, lo=max_i) if not end_threshold is None else None
 
         return self.cropped_index(start_i, end_i)
+
+
+def write_elongation(elongation, file_name):
+    """
+    Write Elongation object to file.
+
+    :param: Elongation object
+    :param file_name: name of the file to be written to
+    """
+    extension = file_name.split('.')[-1]
+    if extension == 'csv':
+        write_csv(elongation, file_name)
+    elif extension == 'prn':
+        write_prn(elongation, file_name)
+    else:
+        raise NotImplementedError()
+
+
+def write_csv(elongation, file_name):
+    """
+    Write Elongation object to a CSV file.
+
+    :param: Elongation object
+    :param file_name: name of the file to be written to
+    """
+    e = elongation
+    with open(file_name, 'w') as f:
+        f.write("""\
+Thickness, {thickness}
+Break Load, {break_load}
+Break Strength, {break_strength}
+Break Elongation, {break_elongation}
+Crosshead Speed, {crosshead_speed}
+Gauge Length, {gauge_length}
+Yield Strength, {yield_strength}
+Yield Load, {yield_load}
+
+Points
+{x_units},   {y_units}
+""".format(x_units=e.x_units, y_units=e.y_units, **e.data))
+        for x, y in zip(e.xs, e.ys):
+            f.write(f'{x:>8.4f}, {y:>8.4f}\n')
+
+def write_prn(elongation, file_name):
+    """
+    Write Elongation object to a prn file.
+
+    :param: Elongation object
+    :param file_name: name of the file to be written to
+    """
+    e = elongation
+    with open(file_name, 'w') as f:
+        f.write("""prn:13|
+subtype = MT2500
+Doc={MT2500:14|
+  Film={12.1|
+""" +
+"""\
+    Test_Mode = {Test_Mode}
+    Setup_Name = {Setup_Name}
+    Unit_System = {Unit_System}
+    Graph_Mode = {Graph_Mode}
+    Sample_Length = {Sample_Length}
+    CrossheadVlcty = {CrossheadVlcty}
+    VelocityUnitId = {VelocityUnitId}
+    CrossheadSpeed = {CrossheadSpeed}
+    Loadcell_Mode = {Loadcell_Mode}
+    Loadcell_Type = {Loadcell_Type}
+    Start_Threshold = {Start_Threshold}
+    Stop_Threshold = {Stop_Threshold}
+    Auto_Stop = {Auto_Stop}
+    Auto_Return = {Auto_Return}
+    ExtnsnResetOnStart = {ExtnsnResetOnStart}
+    Yield_Type = {Yield_Type}
+    COF_Sled_Load = {COF_Sled_Load}
+    }}
+""".format(**e.data['film_data']) +
+"""\
+  Test_Info={{2|
+    Color = {Color}
+    Order_Id = {Order_Id}
+    Technician = {Technician}
+    Test_Method = {Test_Method}
+    Sample_Conditioning = {Sample_Conditioning}
+    Test_Conditions = {Test_Conditions}
+    Product_Name = {Product_Name}
+    Test_Direction = {Test_Direction}
+    }}
+""".format(**e.data['test_info']) +
+"""\
+  Test_Data=(
+    {{6|
+      Crosshead_speed = {crosshead_speed}
+      X_unit = {x_units}
+      Y_unit = {y_units}
+      Sample_Thkness = {sample_thickness}
+      Sample_Width = {sample_width}
+      Grip_Separation = {gauge_length}
+      Start_Threshhold = {start_threshhold}
+      Stop_Threshhold = {stop_threshhold}
+      Number_Of_Points = {number_of_points}
+      Points = [""".format(number_of_points=len(e.xs), x_units=e.x_units, y_units=e.y_units, **e.data) +
+''.join(f'   {x:> 8.4f}, {y:> 8.4f}\n' for x, y in zip(e.xs, e.ys)) +
+"""\
+         ]
+      }},
+    )
+  Test_Results=(
+    {{6|
+      TestDate = {date}
+      Length_Cnvrsn = {length_conversion}
+      Force_Cnvrsn = {force_conversion}
+      LoadCell_Capacity = {loadcell_capacity}
+      LoadCell_CpctyUnit = {loadcell_capacity_unit}
+      LoadCell_BitsOfReso = {loadcell_bits_of_resolution}
+      Analysis={{ATensile:1|
+        Slack_time = {slack_time}
+        SampleThickness = {sample_thickness}
+        BreakLoad = {break_load}
+        BreakStrength = {break_strength}
+        BreakElongation = {break_elongation}
+        BreakPctElongation = {break_percent_elongation}
+        YieldStrength1 = {yield_strength}
+        YieldLoad1 = {yield_load}
+        }}
+      }},
+    )
+  }}
+""".format(**e.data)
+)
 
 
 def read_elongation(file_name):
