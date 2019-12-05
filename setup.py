@@ -23,5 +23,5 @@ setuptools.setup(
     python_requires='>=3.6',
     setup_requires=['wheel'],
     install_requires=['numpy', 'more_itertools'],
-    tests_require=['pytest'],
+    tests_require=['pytest', 'coverage'],
 )
