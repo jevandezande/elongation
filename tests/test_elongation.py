@@ -39,8 +39,16 @@ def test_cross_section():
 
 
 def test_modulus():
-    elongs = read_prn('tests/test_files/test1.prn')
-    assert elongs[0].modulus == 1
+    elong = read_prn('tests/test_files/test1.prn')[0]
+    elong.convert_x_units_to_strain()
+    #elong.youngs_modulus == 1
+
+
+def test_youngs_modulus_array():
+    elong = read_prn('tests/test_files/test1.prn')[0]
+    elong.convert_x_units_to_strain()
+    elong2 = elong.smoothed(10)
+
 
 def test_eq():
     data = {

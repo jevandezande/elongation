@@ -104,10 +104,30 @@ class Elongation:
         return self.__class__(np.copy(self.xs), smooth_curve(self.ys, box_pts), self.x_units, self.y_units, **self.data)
 
     @property
-    def modulus(self):
-        modulus = 1
+    def youngs_modulus(self, x_limit=None):
+        """
+        Determine the Young's modulus of the Elongation.
 
-        return modulus
+        Modulus is calculated as the peak of the derivative of the stress strain curve.
+
+        :return: Young's modulus (units of Pa)
+        """
+        if x_limit is not None:
+            raise NotImplementedError('Limits on x not yet implemented, see youngs_modulus_array()')
+
+        return self.youngs_modulus_array.max()
+
+    @property
+    def youngs_modulus_array(self):
+        """
+        Determine the Young's modulus of all points of the elongation curve.
+
+        :return: Young's modulus array (units of Pa)
+        """
+        assert self.x_units == 'strain'
+        assert self.y_units == 'N'
+
+        return self.derivative()*self.cross_section  # N/L·ΔL * A
 
     @property
     def cross_section(self):
@@ -116,16 +136,16 @@ class Elongation:
         """
         return self.sample_thickness*self.sample_width
 
-    def derivative(self, units='N/m'):
+    def derivative(self, units='N/strain'):
         """
         Take the derivative of the curve, first converts to the corresponding units.
 
         :param units: units to be used. Derivative is with respect to numerator and denominator.
-        :return derivative:
+        :return: derivative
         """
-        if units == 'N/m':
-            assert (self.x_units == 'm') and (self.y_units == 'N')
-            return np.diff(self.y)/np.diff(self.x)  # N/L·ΔL
+        if units == 'N/strain':
+            assert (self.x_units == 'strain') and (self.y_units == 'N')
+            return np.diff(self.ys)/np.diff(self.xs)  # N/L·ΔL
 
     def cropped(self, start, end):
         """
