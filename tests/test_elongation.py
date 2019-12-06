@@ -13,17 +13,17 @@ def test_convert():
 
 
 def test_write_csv(tmp_path):
-    elongs = read_prn('tests/test_files/test1.prn')
+    elongs = read_prn('tests/test_files/test1.prn')[0]
     outfile = f'{tmp_path}/test1.csv'
-    elongs[0].write(outfile)
+    elongs.write(outfile)
     assert open(outfile).read() == open('tests/test_files/test1.csv').read()
 
 
 def test_write_prn(tmp_path):
     infile = 'tests/test_files/test1.prn'
-    elongs = read_prn(infile)
+    elong = read_prn(infile)[0]
     outfile = f'{tmp_path}/test1.prn'
-    elongs[0].write(outfile)
+    elong.write(outfile)
 
 
 def test_smoothed():
@@ -158,7 +158,9 @@ def test_read_prn():
 
 def test_read_csv(tmp_path):
     infile = 'tests/test_files/test1.csv'
-    elong = read_elongation(infile)
+    elong, *others = read_elongation(infile)
+    assert len(others) == 0
+
     outfile = f'{tmp_path}/test1_write.csv'
     elong.write(outfile)
     assert open(outfile).read() == open(infile).read()
@@ -169,5 +171,3 @@ def test_read():
     assert len(elongs) == 3
     assert elongs[0].x_units == 's'
     assert elongs[0].y_units == 'N'
-
-

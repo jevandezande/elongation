@@ -1,8 +1,11 @@
+import itertools
 import numpy as np
 
 from datetime import datetime
 
-from .tools import MyIter, compare_dictionaries, read_key_value, try_to_num, smooth_curve
+from .tools import (MyIter, compare_dictionaries, read_key_value, smooth_curve,
+                    try_to_num)
+
 
 
 class Elongation:
@@ -301,12 +304,22 @@ Doc={MT2500:14|
 )
 
 
+def read_elongations(file_names):
+    """
+    Read an iterable of elongation files.
+
+    :param file_names: name of elongation files
+    :return: list of Elongation objects.
+    """
+    return list(itertools.chain(*(read_elongation(f) for f in files_names)))
+
+
 def read_elongation(file_name):
     """
     Read an elongation file.
 
     :param file_name: name of the file
-    :return: Elongation object
+    :return: list of Elongation objects
     """
     extension = file_name.split('.')[-1]
 
@@ -321,6 +334,9 @@ def read_elongation(file_name):
 def read_prn(file_name):
     """
     Read a prn file.
+
+    :param file_name: name of the file
+    :return: list of Elongation objects
 
 ```
 prn:13|
@@ -523,6 +539,12 @@ Doc={MT2500:14|
 
 
 def read_csv(file_name):
+    """
+    Read a csv file
+
+    :param file_name: name of the file
+    :return: list of Elongation objects (currently only a single item in list).
+    """
     data = {}
     with open(file_name) as f:
         for line in f:
@@ -544,7 +566,7 @@ def read_csv(file_name):
             ys.append(float(y.strip()))
         data['xs'], data['ys'] = xs, ys
 
-    return Elongation(**data)
+    return [Elongation(**data)]
 
 
 if __name__ == "__main__":
