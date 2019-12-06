@@ -1,0 +1,40 @@
+#!/usr/bin/env python3
+import sys
+import argparse
+
+from glob import glob
+
+from matplotlib import pyplot as plt
+
+sys.path.insert(0, '../')
+
+from elongation.plot import plotter
+from elongation.elongation import read_elongations
+
+parser = argparse.ArgumentParser(description='Plot elongation files.')
+parser.add_argument('-i', '--input', help='The file(s) to be read (accepts *).',
+                    type=str, nargs='+', default=[])
+parser.add_argument('-s', '--save', help='Where to save the figure.',
+                    type=str, default=False)
+parser.add_argument('--title', help='Figure Title',
+                    type=str, default=None)
+parser.add_argument('-n', '--name', help='The name(s) of the files to be read.',
+                    type=str, nargs='+', default='{autogenerate}')
+
+args = parser.parse_args()
+
+inps = [i for inp in args.input for i in glob(inp)]
+elongs = read_elongations(inps)
+
+names = list(range(len(elongs))) if args.name == '{autogenerate}' else args.name
+for elong, name in zip(elongs, names):
+    elong.name = name
+
+fig, ax = plotter(
+    elongs,
+    title=args.title,
+    smoothed=False,
+    savefig=args.save
+)
+
+plt.show()

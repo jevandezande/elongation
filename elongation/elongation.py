@@ -9,7 +9,7 @@ from .tools import (MyIter, compare_dictionaries, read_key_value, smooth_curve,
 
 
 class Elongation:
-    def __init__(self, xs, ys, x_units, y_units, **other):
+    def __init__(self, xs, ys, x_units, y_units, name=None, **other):
         """
         Container for elongation data
         :param xs: x-values (elongation)
@@ -21,6 +21,7 @@ class Elongation:
         self.x_units = x_units
         self.ys = ys
         self.y_units = y_units
+        self.name = name
         self.break_load = other['break_load']
         self.break_elongation = other['break_elongation']  # %
         self.break_strength = other['break_strength']
@@ -311,7 +312,7 @@ def read_elongations(file_names):
     :param file_names: name of elongation files
     :return: list of Elongation objects.
     """
-    return list(itertools.chain(*(read_elongation(f) for f in files_names)))
+    return list(itertools.chain(*(read_elongation(f) for f in file_names)))
 
 
 def read_elongation(file_name):

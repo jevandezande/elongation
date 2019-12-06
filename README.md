@@ -10,4 +10,10 @@ Supports
 --------
 
 prn - as produced by the MT-2500
+
 csv - as defined herein
+
+Scripts
+-------
+convert_elongation - convert elongation file(s) between different file types.
+plot_elongation - plot the elongation from file(s).
