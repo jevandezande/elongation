@@ -2,7 +2,7 @@ import numpy as np
 
 from datetime import datetime
 
-from .tools import MyIter, compare_dictionaries, read_key_value, try_to_num
+from .tools import MyIter, compare_dictionaries, read_key_value, try_to_num, smooth_curve
 
 
 class Elongation:
@@ -81,7 +81,7 @@ class Elongation:
         factor = None
         if self.x_units == 'strain':
             return
-        elif self.x_units in ['seconds', 'Secs.']:
+        elif self.x_units == 's':
             factor = self.crosshead_speed / self.gauge_length
         elif self.x_units in ['mm', 'cm', 'm', 'in', 'ft']:
             factor = 1 / self.gauge_length
@@ -89,6 +89,15 @@ class Elongation:
             raise NotImplementedError(f'Converting from {self.x_units} to strain is no yet implemented.')
 
         self.convert_x_units('strain', factor)
+
+    def smoothed(self, box_pts=True):
+        """
+        Generate a smoothed version of the Elongation.
+
+        :param box_pts: number of data points to convolve, if True, use default
+        :return: smoothed Elongation
+        """
+        return self.__class__(np.copy(self.xs), smooth_curve(self.ys, box_pts), self.x_units, self.y_units, **self.data)
 
     @property
     def modulus(self):
@@ -198,7 +207,7 @@ Yield Strength, {yield_strength}
 Yield Load, {yield_load}
 
 Points
-{x_units},   {y_units}
+{x_units:^8},{y_units:^8}
 """.format(x_units=e.x_units, y_units=e.y_units, **e.data))
         for x, y in zip(e.xs, e.ys):
             f.write(f'{x:>8.4f}, {y:>8.4f}\n')
@@ -502,7 +511,9 @@ Doc={MT2500:14|
             results.pop(key)
 
         if data['x_units'] == 'Secs.':
-            data['x_units'] = 'seconds'
+            data['x_units'] = 's'
+        if data['y_units'] == 'Newtons':
+            data['y_units'] = 'N'
         if results['date']:
             results['date'] = datetime.strptime(results['date'], '%d %b, %Y')
 

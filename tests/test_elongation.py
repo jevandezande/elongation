@@ -26,6 +26,13 @@ def test_write_prn(tmp_path):
     elongs[0].write(outfile)
 
 
+def test_smoothed():
+    elong = read_prn('tests/test_files/test1.prn')[0]
+    assert all(elong.smoothed().xs == elong.xs)
+    assert all(elong.smoothed(1).ys == elong.ys)
+    elong.smoothed().ys == 0
+
+
 def test_cross_section():
     elong = read_prn('tests/test_files/test1.prn')[0]
     assert elong.cross_section == 1
@@ -74,8 +81,8 @@ def test_read_prn():
     e0, e1, e2 = read_prn('tests/test_files/test1.prn')
 
     assert e0.crosshead_speed == 0.787
-    assert e0.x_units == 'seconds'
-    assert e0.y_units == 'Newtons'
+    assert e0.x_units == 's'
+    assert e0.y_units == 'N'
     assert e0.data['sample_thickness'] == 1.000
     assert e0.data['sample_width'] == 1.000
     assert e0.data['gauge_length'] == 6.000
@@ -101,8 +108,8 @@ def test_read_prn():
         e0.Number_of_Points
 
     assert e1.crosshead_speed == 21.260
-    assert e1.x_units == 'seconds'
-    assert e1.y_units == 'Newtons'
+    assert e1.x_units == 's'
+    assert e1.y_units == 'N'
     assert e1.data['sample_thickness'] == 1.000
     assert e1.data['sample_width'] == 1.000
     assert e1.data['gauge_length'] == 60.000
@@ -125,8 +132,8 @@ def test_read_prn():
     assert e1.yield_load == 36.0257
 
     assert e2.crosshead_speed == 21.260
-    assert e2.x_units == 'seconds'
-    assert e2.y_units == 'Newtons'
+    assert e2.x_units == 's'
+    assert e2.y_units == 'N'
     assert e2.data['sample_thickness'] == 1.000
     assert e2.data['sample_width'] == 1.000
     assert e2.data['gauge_length'] == 60.000
@@ -160,7 +167,7 @@ def test_read_csv(tmp_path):
 def test_read():
     elongs = read_elongation('tests/test_files/test1.prn')
     assert len(elongs) == 3
-    assert elongs[0].x_units == 'seconds'
-    assert elongs[0].y_units == 'Newtons'
+    assert elongs[0].x_units == 's'
+    assert elongs[0].y_units == 'N'
 
 

@@ -55,3 +55,21 @@ def compare_dictionaries(dict1, dict2):
             elif any(val1 != val2):  # Compare all values
                 return False
     return True
+
+
+def smooth_curve(ys, box_pts=True):
+    """
+    Smooth a curve.
+
+    Assumes that the ys are uniformly distributed. Returns output of length
+    `max(ys, box_pts)`, boundary effects are visible.
+
+    :param ys: points to smooth
+    :param box_pts: number of data points to convolve, if True, use 3
+    :return: smoothed points
+    """
+    if box_pts is True:
+        box_pts = 3
+
+    box = np.ones(box_pts) / box_pts
+    return np.convolve(ys, box, mode='same')
