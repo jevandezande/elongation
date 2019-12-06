@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+import sys
+
+from glob import glob
+from argparse import ArgumentParser
+
+sys.path.insert(0, '../')
+
+from elongation.elongation import read_elongation
+
+parser = ArgumentParser(description='Convert between elongation types.')
+parser.add_argument('-i', '--input', help='The file(s) to be read (accepts *).',
+                    type=str, nargs='+', default=[])
+parser.add_argument('-t', '--style', help='The style to be converted to.',
+                    type=str, default='csv')
+
+args = parser.parse_args()
+
+for inp in args.input:
+    for file_name in glob(inp):
+        elong = read_elongation(file_name)[0]
+        new_name = f"{'.'.join(inp.split('.')[:-1])}.{args.style}"
+        elong.write(new_name)

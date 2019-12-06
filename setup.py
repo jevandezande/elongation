@@ -24,4 +24,5 @@ setuptools.setup(
     setup_requires=['wheel'],
     install_requires=['numpy', 'more_itertools'],
     tests_require=['pytest', 'coverage'],
+    scripts=['bin/convert_elongation'],
 )
