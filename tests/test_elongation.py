@@ -49,6 +49,12 @@ def test_youngs_modulus_array():
     elong.convert_x_units_to_strain()
     elong2 = elong.smoothed(10)
 
+def test_peaks():
+    elong = read_prn('tests/test_files/test1.prn')[0]
+    elong.convert_x_units_to_strain()
+    print(elong.peaks())
+    assert 0
+
 
 def test_eq():
     data = {

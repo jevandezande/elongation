@@ -3,9 +3,9 @@ import numpy as np
 
 from datetime import datetime
 
+from scipy import signal
 from .tools import (MyIter, compare_dictionaries, read_key_value, smooth_curve,
                     try_to_num)
-
 
 
 class Elongation:
@@ -18,7 +18,6 @@ class Elongation:
         :param **other: other data to be saved
         """
         self.xs = xs
-        self.x_units = x_units
         self.ys = ys
         self.y_units = y_units
         self.name = name
@@ -32,6 +31,8 @@ class Elongation:
         self.yield_strength = other['yield_strength']
         self.yield_load = other['yield_load']
         self.data = other
+        self.strain = self._determine_strain(x_units)
+        self.stress = self.ys/self.cross_section
 
     def __eq__(self, other):
         """
@@ -53,46 +54,21 @@ class Elongation:
         """
         write_elongation(self, file_name, style=style)
 
-    def convert_x_units(self, to, factor):
-        """
-        Convert the x_units.
-
-        :param to: units to convert to
-        :param factor: factor to multiply by
-        """
-        self.x_units = to
-        self.xs *= factor
-        self.break_elongation *= factor
-
-    def convert_y_units(self, to, factor):
-        """
-        Convert the y_units.
-
-        :param to: units to convert to
-        :param factor: factor to multiply by
-        """
-        self.x_units = to
-        self.ys *= factor
-        self.break_load *= factor
-        self.break_strength *= factor
-        self.yield_strength *= factor
-        self.yield_load *= factor
-
-    def convert_x_units_to_strain(self):
+    def _determine_strain(self, x_units):
         """
         Convert the x_units to strain (ΔL/L).
         """
         factor = None
-        if self.x_units == 'strain':
+        if x_units == 'strain':
             return
-        elif self.x_units == 's':
+        elif x_units == 's':
             factor = self.crosshead_speed / self.gauge_length
-        elif self.x_units in ['mm', 'cm', 'm', 'in', 'ft']:
+        elif x_units in ['mm', 'cm', 'm', 'in', 'ft']:
             factor = 1 / self.gauge_length
         else:
-            raise NotImplementedError(f'Converting from {self.x_units} to strain is no yet implemented.')
+            raise NotImplementedError(f'Converting from {x_units} to strain is no yet implemented.')
 
-        self.convert_x_units('strain', factor)
+        self.strain = self.xs*factor
 
     def smoothed(self, box_pts=True):
         """
@@ -101,7 +77,7 @@ class Elongation:
         :param box_pts: number of data points to convolve, if True, use default
         :return: smoothed Elongation
         """
-        return self.__class__(np.copy(self.xs), smooth_curve(self.ys, box_pts), self.x_units, self.y_units, **self.data)
+        return self.__class__(np.copy(self.strain), smooth_curve(self.stress, box_pts), self.x_units, self.y_units, **self.data)
 
     @property
     def youngs_modulus(self, x_limit=None):
@@ -189,6 +165,65 @@ class Elongation:
         end_i = bisect(self.ys, 0.25*max_y, lo=max_i) if not end_threshold is None else None
 
         return self.cropped_index(start_i, end_i)
+
+    def peaks(self, indices=False, height=None, threshold=None, distance=None,
+              prominence=None, width=None, wlen=None, rel_height=None, plateau_size=None):
+        """
+        Finds the indices of peaks in the elongation.
+
+        Utilizes scipy.signal.find_peaks and the parameters therein.
+
+        :param indices: return peak indices instead of x-values
+        :return: peak x-values (or peak indices if indices == True), properties
+        """
+        peaks, properties = signal.find_peaks(
+            self.stress, height, threshold, distance, prominence, width, wlen,
+            rel_height, plateau_size
+        )
+
+        if indices:
+            return peaks, properties
+        return self.strain[peaks], properties
+
+    def break1(self, **kwargs):
+        """
+        Determine the location and force at break.
+
+        :param **kwargs: see peaks()
+        :return: stress, strain of break
+        """
+        index = self.peaks(indices=True, **kwargs)[0][-1]
+        return self.strain[index], self.stress[index]
+
+    def break1_elongation(self, **kwargs):
+        return self.break1(threshold)[0]
+
+    def break1_load(self, **kwargs):
+        return self.break1(threshold)[1]*self.cross_section
+
+    def break1_strength(self, **kwargs):
+        return self.break1_load(**kwargs)
+
+    def yield1(self, **kwargs):
+        """
+        Determine the location and force at yield.
+
+        Yield is defined as the first peak in the stress/strain curve.
+
+        :param **kwargs: see peaks()
+        :return: stress, strain of yield
+        """
+        index = self.peaks(indices=True, **kwargs)[0][0]
+        return self.strain[index], self.stress[index]
+
+    def yield_elongation(self, **kwargs):
+        return self.yield1(threshold)[0]
+
+    def yield_load(self, **kwargs):
+        return self.yield1(threshold)[1]*self.cross_section
+
+    def yield_strength(self, **kwargs):
+        return self.yield1(threshold)[1]
 
 
 def write_elongation(elongation, file_name, style=None):
