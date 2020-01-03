@@ -135,7 +135,8 @@ class Elongation:
         max_y = self.ys[max_i]
 
         if start_threshold is not None:
-            for i, y in enumerate(self.ys):
+            # includes the value before threshold is met
+            for i, y in enumerate(self.ys[1:]):
                 if y > max_y*start_threshold:
                     start_i = i
                     break

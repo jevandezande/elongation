@@ -89,10 +89,10 @@ def test_cleaned():
     elong = read_prn('tests/test_files/test1.prn')[0]
 
     assert len(elong.cleaned(None, None).xs) == len(elong.xs)
-    assert len(elong.cleaned(None, 0.25).xs) == 2337
+    assert len(elong.cleaned().xs) == 2327
+    assert len(elong.cleaned(0.01, None).xs) == 2334
+    assert len(elong.cleaned(None, 0.5).xs) == 2337
     assert len(elong.cleaned(None, 0.9).xs) == 2331
-    assert elong.cleaned(0.1)
-
 
 def test_peaks():
     elong = read_prn('tests/test_files/test1.prn')[0]
