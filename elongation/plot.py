@@ -13,6 +13,7 @@ def plotter(
     ylim=None, yticks=None, yticks_minor=True, ylabel=None,
     smoothed=False,
     legend=True, colors=None, markers=None, linestyles=None,
+    peaks=False,
     savefig=None,
 ):
     """
@@ -27,6 +28,7 @@ def plotter(
     :param colors: colors to plot the spectra
     :param markers: markers to plot the spectra
     :param linestyles: linestyles to plot the spectra
+    :param peaks: dictionary of peak picking parameters
     :param savefig: where to save the figure
     :return: figure and axes
     """
@@ -41,7 +43,7 @@ def plotter(
     if smoothed:
         elongs = [elong.smoothed(smoothed) for elong in elongs]
 
-    plot_elongations(elongs, style, ax, markers=markers, linestyles=linestyles, colors=colors)
+    plot_elongations(elongs, style, ax, markers=markers, linestyles=linestyles, colors=colors, peaks=peaks)
 
     if legend:
         ax.legend()
@@ -52,7 +54,7 @@ def plotter(
     return fig, ax
 
 
-def plot_elongations(elongs, style, ax, markers=None, linestyles=None, colors=None):
+def plot_elongations(elongs, style, ax, markers=None, linestyles=None, colors=None, peaks=False):
     """
     Plot Elongations on an axis.
 
@@ -62,16 +64,17 @@ def plot_elongations(elongs, style, ax, markers=None, linestyles=None, colors=No
     :param markers: the markers to use at each point on the plot
     :param linestyles: the styles of line to use
     :param colors: the colors to use
+    :param peaks: dictionary of peak picking parameters
     """
     colors = cycle_values(colors)
     markers = cycle_values(markers)
     linestyles = cycle_values(linestyles)
 
     for elong, color, marker, linestyle in zip(elongs, colors, markers, linestyles):
-        plot_elongation(elong, style, ax, marker=marker, linestyle=linestyle, color=color)
+        plot_elongation(elong, style, ax, marker=marker, linestyle=linestyle, color=color, peaks=peaks)
 
 
-def plot_elongation(elong, style, ax, marker=None, linestyle=None, color=None):
+def plot_elongation(elong, style, ax, marker=None, linestyle=None, color=None, peaks=False):
     """
     Plot an Elongation on an axis
 
@@ -81,6 +84,7 @@ def plot_elongation(elong, style, ax, marker=None, linestyle=None, color=None):
     :param marker: the marker to use at each point on the plot
     :param linestyle: the style of line to use
     :param color: the color to use
+    :param peaks: dictionary of peak picking parameters
     """
     ax.plot(
         elong.xs, elong.ys,
@@ -88,10 +92,34 @@ def plot_elongation(elong, style, ax, marker=None, linestyle=None, color=None):
         marker=marker, linestyle=linestyle, color=color
     )
 
+    if peaks:
+        peak_defaults = {
+            'format': '3.0f',
+            'labels': True,
+            'marks': 'x',
+            'print': True,
+        }
+        peaks = peak_defaults if peaks is True else {**peak_defaults, **peaks}
+        peak_indices, _ = elong.peak_indices()
+        peak_xs, peak_ys = elong.xs[peak_indices], elong.ys[peak_indices]
 
-def setup_axis(ax, style='stress/strain', title=None,
-               xlim=None, xticks=None, xticks_minor=True, xlabel=None,
-               ylim=None, yticks=None, yticks_minor=True, ylabel=None
+        if peaks['marks']:
+            ax.scatter(peak_xs, peak_ys, color=color, marker=peaks['marks'])
+
+        if peaks['labels']:
+            for x, y in zip(peak_xs, peak_ys):
+                ax.text(x, y, f'{{:{peaks["format"]}}}'.format(x), verticalalignment='bottom')
+
+        if peaks['print']:
+            print('   X       Y')
+            for x, y in zip(peak_xs, peak_ys):
+                print(f'{x:>6.1f}  {y:>6.1f}')
+
+
+def setup_axis(
+    ax, style='stress/strain', title=None,
+    xlim=None, xticks=None, xticks_minor=True, xlabel=None,
+    ylim=None, yticks=None, yticks_minor=True, ylabel=None
 ):
     """
     Setup the axis labels and limits. Autogenerates based on style for any variable set to None.

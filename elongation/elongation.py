@@ -54,6 +54,11 @@ class Elongation:
         write_elongation(self, file_name, style=style)
 
     @property
+    def max(self):
+        max_i = np.argmax(self.ys)
+        return self.xs[max_i], self.ys[max_i]
+
+    @property
     def cross_section(self):
         """
         Cross sectional area of the material.
@@ -124,7 +129,7 @@ class Elongation:
         max_y = self.ys[max_i]
 
         if start_threshold is not None:
-            for i, y in enumerate(self.ys[max_i:], start=max_i):
+            for i, y in enumerate(self.ys):
                 if y > max_y*start_threshold:
                     start_i = i
                     break

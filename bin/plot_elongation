@@ -20,6 +20,10 @@ parser.add_argument('--title', help='Figure Title',
                     type=str, default=None)
 parser.add_argument('-n', '--name', help='The name(s) of the files to be read.',
                     type=str, nargs='+', default='{autogenerate}')
+parser.add_argument('-c', '--clean', help='Parameters for cleaning the plots.',
+                    type=float, nargs='+', default=[0.01, 0.25])
+parser.add_argument('-p', '--peaks', help='Label the most prominent peaks with their location.',
+                    default=False, action='store_true')
 
 args = parser.parse_args()
 
@@ -30,11 +34,14 @@ names = list(range(len(elongs))) if args.name == '{autogenerate}' else args.name
 for elong, name in zip(elongs, names):
     elong.name = name
 
+elongs = [elong.cleaned(*args.clean) for elong in elongs]
+
 fig, ax = plotter(
     elongs,
     title=args.title,
     smoothed=False,
-    savefig=args.save
+    peaks=args.peaks,
+    savefig=args.save,
 )
 
 plt.show()
