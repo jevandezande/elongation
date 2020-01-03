@@ -12,20 +12,20 @@ def test_compare_dictionaries():
     cd = compare_dictionaries
     a = {}
     a2 = {}
-    b = {1:1}
-    c = {1:'a'}
-    d = {2:1}
-    e = {1:1, 2:1}
-    f = {1:'a', 2:[1, 2, 3]}
-    f2 = {1:'a', 2:[1, 2, 3]}
-    g = {1:'b', 2:[1, 2, 3]}
-    h = {2:'a', 2:[1, 2, 3]}
-    i = {1:'a', 2:[1, 2, 4]}
-    j = {1:'a', 2:np.array([1, 2, 3])}
-    k = {1:'a', 2:np.array([1, 2, 4])}
-    l = {1:'a', 2:{2:np.array([1, 2, 3])}}
-    l2 = {1:'a', 2:{2:np.array([1, 2, 3])}}
-    m = {1:'a', 2:{2:np.array([1, 2, 4])}}
+    b = {1: 1}
+    c = {1: 'a'}
+    d = {2: 1}
+    e = {1: 1, 2: 1}
+    f = {1: 'a', 2: [1, 2, 3]}
+    f2 = {1: 'a', 2: [1, 2, 3]}
+    g = {1: 'b', 2: [1, 2, 3]}
+    h = {2: 'a', 2: [1, 2, 3]}
+    i = {1: 'a', 2: [1, 2, 4]}
+    j = {1: 'a', 2: np.array([1, 2, 3])}
+    k = {1: 'a', 2: np.array([1, 2, 4])}
+    m = {1: 'a', 2: {2: np.array([1, 2, 3])}}
+    m2 = {1: 'a', 2: {2: np.array([1, 2, 3])}}
+    n = {1: 'a', 2: {2: np.array([1, 2, 4])}}
 
     assert cd(a, a)
     assert cd(a, a2)
@@ -34,8 +34,8 @@ def test_compare_dictionaries():
     assert cd(f, f)
     assert cd(f, f2)
     assert cd(j, j)
-    assert cd(l, l)
-    assert cd(l, l2)
+    assert cd(m, m)
+    assert cd(m, m2)
 
     assert not cd(a, b)
     assert not cd(b, c)
@@ -52,7 +52,7 @@ def test_compare_dictionaries():
     assert cd(f, j)
     assert cd(j, {**j})
     assert not cd(j, i)
-    assert cd(j, {**i, 2:np.array([1, 2, 3])})
+    assert cd(j, {**i, 2: np.array([1, 2, 3])})
 
-    assert not cd(l, m)
-    assert cd(l, {**m, 2:{2:np.array([1, 2, 3])}})
+    assert not cd(m, n)
+    assert cd(m, {**n, 2: {2: np.array([1, 2, 3])}})

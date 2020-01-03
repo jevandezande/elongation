@@ -22,7 +22,7 @@ setuptools.setup(
     license='MIT',
     python_requires='>=3.6',
     setup_requires=['wheel'],
-    install_requires=['numpy', 'matplotlib', 'more_itertools'],
+    install_requires=['matplotlib', 'more_itertools', 'numpy', 'scipy'],
     tests_require=['pytest', 'coverage'],
     scripts=['bin/convert_elongation', 'bin/plot_elongation'],
 )

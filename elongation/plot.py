@@ -7,7 +7,7 @@ from itertools import cycle
 
 def plotter(
     elongs,
-    title=None, style=None,
+    title=None, style='stress/strain',
     plot=None,
     xlim=None, xticks=None, xticks_minor=True, xlabel=None,
     ylim=None, yticks=None, yticks_minor=True, ylabel=None,
@@ -43,7 +43,7 @@ def plotter(
     if smoothed:
         elongs = [elong.smoothed(smoothed) for elong in elongs]
 
-    plot_elongations(elongs, style, ax, markers=markers, linestyles=linestyles, colors=colors, peaks=peaks)
+    plot_elongations(elongs, ax, style, markers=markers, linestyles=linestyles, colors=colors, peaks=peaks)
 
     if legend:
         ax.legend()
@@ -54,7 +54,7 @@ def plotter(
     return fig, ax
 
 
-def plot_elongations(elongs, style, ax, markers=None, linestyles=None, colors=None, peaks=False):
+def plot_elongations(elongs, ax, style='stress/strain', markers=None, linestyles=None, colors=None, peaks=False):
     """
     Plot Elongations on an axis.
 
@@ -71,10 +71,10 @@ def plot_elongations(elongs, style, ax, markers=None, linestyles=None, colors=No
     linestyles = cycle_values(linestyles)
 
     for elong, color, marker, linestyle in zip(elongs, colors, markers, linestyles):
-        plot_elongation(elong, style, ax, marker=marker, linestyle=linestyle, color=color, peaks=peaks)
+        plot_elongation(elong, ax, style, marker=marker, linestyle=linestyle, color=color, peaks=peaks)
 
 
-def plot_elongation(elong, style, ax, marker=None, linestyle=None, color=None, peaks=False):
+def plot_elongation(elong, ax, style='stress/strain', marker=None, linestyle=None, color=None, peaks=False):
     """
     Plot an Elongation on an axis
 

@@ -1,3 +1,5 @@
+matplotlib
+more_itertools
 numpy
 pytest
-more_itertools
+scipy

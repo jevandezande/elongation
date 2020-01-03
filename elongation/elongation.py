@@ -42,7 +42,13 @@ class Elongation:
         """
         Make a copy of the Elongation object.
         """
-        return self.__class__(self.xs.copy(), self.ys.copy(), self.gauge_length, self.sample_width, self.sample_thickness, self.name)
+        return self.__class__(
+            self.xs.copy(), self.ys.copy(),
+            self.gauge_length,
+            self.sample_width,
+            self.sample_thickness,
+            self.name
+        )
 
     def write(self, file_name, style=None):
         """
@@ -171,7 +177,6 @@ class Elongation:
         """
         return np.diff(self.ys)/np.diff(self.xs)  # N/L·ΔL
 
-
     def peaks(self, **kwargs):
         """
         Finds the location of peaks in the elongation.
@@ -194,7 +199,7 @@ class Elongation:
         :return: peak indices, properties
         """
         kwarg_defaults = {
-            'width':5,  # ensure small spikes are ignored
+            'width': 5,  # ensure small spikes are ignored
         }
         kwarg_defaults.update(kwargs)
         return signal.find_peaks(self.ys, **kwarg_defaults)
