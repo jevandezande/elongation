@@ -5,7 +5,11 @@ import more_itertools as mit
 
 class MyIter(mit.peekable):
     """
-    Simple class for making it easier to debug reading of files.
+    Simple class for making it easier to debug the parsing of files.
+
+    Extends more-itertools.peekable:
+        _index: index of currently read line
+        _line: currently read line
     """
     def __init__(self, iterable):
         self._index = 0
@@ -13,30 +17,43 @@ class MyIter(mit.peekable):
         super().__init__(iterable)
 
     def __next__(self):
-        self._index += 1
         self._line = super().__next__()
+        self._index += 1
         return self._line
 
 
 def read_key_value(line, separator='='):
-    key, *value = line.split(separator)
-    return key.strip(), separator.join(value).strip()
+    """
+    Read a key and value from a line.
+    Only splits on first instance of separator.
+
+    :param line: string of text to read.
+    :param separator: key-value separator
+    """
+    key, value = line.split(separator, 1)
+    return key.strip(), value.strip()
 
 
 def try_to_num(in_str):
+    """
+    Convert string to a number if possible.
+
+    :param: in_str
+    :return: int, float, or original string
+    """
     for f in (int, float):
         try:
             return f(in_str)
-        except Exception as e:
+        except ValueError as e:
             pass
     return in_str
 
 
 def compare_dictionaries(dict1, dict2):
     """
-    Compare two dictionaries
+    Recursively compare two dictionaries.
 
-    :return: True if the same, False if not
+    :return: True if exactly the same, False if not
     """
     if len(dict1) != len(dict2):
         return False
@@ -73,9 +90,3 @@ def smooth_curve(ys, box_pts=True):
 
     box = np.ones(box_pts) / box_pts
     return np.convolve(ys, box, mode='same')
-
-
-def linear_index(val, vals, after=True):
-    """
-    Determine the index of the first item greater than val
-    """

@@ -37,8 +37,7 @@ def plotter(
     else:
         fig, ax = plot
 
-    if style is not None:
-        setup_axis(ax, style, title, xlim, xticks, xticks_minor, xlabel, ylim, yticks, yticks_minor, ylabel)
+    setup_axis(ax, style, title, xlim, xticks, xticks_minor, xlabel, ylim, yticks, yticks_minor, ylabel)
 
     if smoothed:
         elongs = [elong.smoothed(smoothed) for elong in elongs]

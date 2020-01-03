@@ -11,7 +11,8 @@ from .tools import (MyIter, compare_dictionaries, read_key_value, smooth_curve,
 class Elongation:
     def __init__(self, xs, ys, gauge_length, sample_width, sample_thickness, name=None):
         """
-        Container for elongation data
+        Container for elongation data.
+
         :param xs: elongation (in units of strain)
         :param ys: force (in Newtons)
         :param name: optional name for the Elongation
@@ -21,17 +22,18 @@ class Elongation:
         self.xs = xs
         self.ys = ys
         self.gauge_length = gauge_length
-        self.sample_width = sample_width
-        self.sample_thickness = sample_thickness
+        self.sample_width = sample_width  # mm
+        self.sample_thickness = sample_thickness  # mm
         self.name = name
 
     def __eq__(self, other):
         """
-        Check if two elongation objects are equivalent.
+        Check if two Elongation objects are equivalent.
 
-        :param other: other Elongation objects to compare to
+        :param other: other Elongation object to compare with
         """
-        return len(self.xs) == len(other.xs)\
+        return isinstance(other, Elongation)\
+            and len(self.xs) == len(other.xs)\
             and all(self.xs == other.xs) and all(self.ys == other.ys)\
             and self.gauge_length == other.gauge_length\
             and self.sample_width == other.sample_width\
@@ -52,7 +54,7 @@ class Elongation:
 
     def write(self, file_name, style=None):
         """
-        Write elongation object to file.
+        Write Elongation object to file.
 
         :param file_name: file to write to.
         :param style: format to write to (guesses based on file extension if None)
@@ -61,6 +63,11 @@ class Elongation:
 
     @property
     def max(self):
+        """
+        Determine the max strain and coordinate stress.
+
+        :return: stress, max_strain
+        """
         max_i = np.argmax(self.ys)
         return self.xs[max_i], self.ys[max_i]
 
@@ -68,8 +75,10 @@ class Elongation:
     def cross_section(self):
         """
         Cross sectional area of the material.
+
+        :return: cross_section in mm^2
         """
-        return self.sample_thickness*self.sample_width
+        return self.sample_thickness*self.sample_width  # mm^2
 
     def smoothed(self, box_pts=True):
         """
@@ -84,7 +93,7 @@ class Elongation:
 
     def cropped(self, start=None, end=None, shifted=True):
         """
-        Crop the elongation by x-value.
+        Crop the Elongation by x-value.
 
         :param start: x-value at which to start
         :param end: x-value at which to end
@@ -108,7 +117,7 @@ class Elongation:
 
     def cropped_index(self, start_i=None, end_i=None, shifted=True):
         """
-        Crop the elongation by index
+        Crop the Elongation by index.
 
         :param start_i: index at which to start
         :param end_i: index at which to end
@@ -159,14 +168,14 @@ class Elongation:
         :return: Young's modulus (units of Pa)
         """
         if x_limit is not None:
-            raise NotImplementedError('Limits on x not yet implemented, see youngs_modulus_array()')
+            raise NotImplementedError('Limits on x not yet implemented, see youngs_modulus_array().')
 
         return max(self.youngs_modulus_array)
 
     @property
     def youngs_modulus_array(self):
         """
-        Determine the Young's modulus of all points of the elongation curve.
+        Determine the Young's modulus at all points on the Elongation.
 
         :return: Young's modulus array (units of Pa)
         """
@@ -180,7 +189,7 @@ class Elongation:
 
     def peaks(self, **kwargs):
         """
-        Finds the location of peaks in the elongation.
+        Finds the location of peaks in the Elongation.
 
         Utilizes scipy.signal.find_peaks and the parameters therein.
 
@@ -192,7 +201,7 @@ class Elongation:
 
     def peak_indices(self, **kwargs):
         """
-        Finds the location of peaks in the elongation.
+        Finds the location of peaks in the Elongation.
 
         Utilizes scipy.signal.find_peaks and the parameters therein.
 
@@ -266,7 +275,7 @@ def write_elongation(elongation, file_name, style=None):
 
 def write_csv(elongation, file_name):
     """
-    Write Elongation object to a CSV file.
+    Write Elongation object to a csv file.
 
     :param: Elongation object
     :param file_name: name of the file to be written to
@@ -536,7 +545,7 @@ Doc={MT2500:14|
 
 def read_csv(file_name):
     """
-    Read a csv file
+    Read a csv file.
 
     :param file_name: name of the file
     :return: list of Elongation objects (currently only a single item in list).
