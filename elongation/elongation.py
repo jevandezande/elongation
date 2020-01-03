@@ -9,30 +9,21 @@ from .tools import (MyIter, compare_dictionaries, read_key_value, smooth_curve,
 
 
 class Elongation:
-    def __init__(self, xs, ys, x_units, y_units, name=None, **other):
+    def __init__(self, xs, ys, gauge_length, sample_width, sample_thickness, name=None):
         """
         Container for elongation data
-        :param xs: x-values (elongation)
-        :param ys: y-values (force)
-        :param x_units, y_units: units for x and y
-        :param **other: other data to be saved
+        :param xs: elongation (in units of strain)
+        :param ys: force (in Newtons)
+        :param name: optional name for the Elongation
         """
+        assert len(xs) == len(ys)
+
         self.xs = xs
         self.ys = ys
-        self.y_units = y_units
+        self.gauge_length = gauge_length
+        self.sample_width = sample_width
+        self.sample_thickness = sample_thickness
         self.name = name
-        self.break_load = other['break_load']
-        self.break_elongation = other['break_elongation']  # %
-        self.break_strength = other['break_strength']
-        self.crosshead_speed = other['crosshead_speed']  # mm/min
-        self.gauge_length = other['gauge_length']  # mm
-        self.sample_width = other['sample_width']  # mm
-        self.sample_thickness = other['sample_thickness']  # mm
-        self.yield_strength = other['yield_strength']
-        self.yield_load = other['yield_load']
-        self.data = other
-        self.strain = self._determine_strain(x_units)
-        self.stress = self.ys/self.cross_section
 
     def __eq__(self, other):
         """
@@ -40,10 +31,18 @@ class Elongation:
 
         :param other: other Elongation objects to compare to
         """
-        compare_dictionaries(self.data, other.data)
+        return len(self.xs) == len(other.xs)\
+            and all(self.xs == other.xs) and all(self.ys == other.ys)\
+            and self.gauge_length == other.gauge_length\
+            and self.sample_width == other.sample_width\
+            and self.sample_thickness == other.sample_thickness\
+            and self.name == other.name
 
-        return all(self.xs == other.xs) and all(self.ys == other.ys) \
-            and self.x_units == other.x_units and self.y_units == other.y_units
+    def copy(self):
+        """
+        Make a copy of the Elongation object.
+        """
+        return self.__class__(self.xs.copy(), self.ys.copy(), self.gauge_length, self.sample_width, self.sample_thickness, self.name)
 
     def write(self, file_name, style=None):
         """
@@ -54,21 +53,12 @@ class Elongation:
         """
         write_elongation(self, file_name, style=style)
 
-    def _determine_strain(self, x_units):
+    @property
+    def cross_section(self):
         """
-        Convert the x_units to strain (ΔL/L).
+        Cross sectional area of the material.
         """
-        factor = None
-        if x_units == 'strain':
-            return
-        elif x_units == 's':
-            factor = self.crosshead_speed / self.gauge_length
-        elif x_units in ['mm', 'cm', 'm', 'in', 'ft']:
-            factor = 1 / self.gauge_length
-        else:
-            raise NotImplementedError(f'Converting from {x_units} to strain is no yet implemented.')
-
-        self.strain = self.xs*factor
+        return self.sample_thickness*self.sample_width
 
     def smoothed(self, box_pts=True):
         """
@@ -77,7 +67,75 @@ class Elongation:
         :param box_pts: number of data points to convolve, if True, use default
         :return: smoothed Elongation
         """
-        return self.__class__(np.copy(self.strain), smooth_curve(self.stress, box_pts), self.x_units, self.y_units, **self.data)
+        elong = self.copy()
+        elong.ys = smooth_curve(self.ys, box_pts)
+        return elong
+
+    def cropped(self, start=None, end=None, shifted=True):
+        """
+        Crop the elongation by x-value.
+
+        :param start: x-value at which to start
+        :param end: x-value at which to end
+        :return: cropped Elongation object
+        """
+        start_i, end_i, i = None, None, 0
+
+        if start is not None:
+            for i, val in enumerate(self.xs):
+                if val > start:
+                    start_i = i
+                    break
+
+        if end is not None:
+            for i, val in enumerate(self.xs[i:], start=i):
+                if val > end:
+                    end_i = i + 1
+                    break
+
+        return self.cropped_index(start_i, end_i, shifted)
+
+    def cropped_index(self, start_i=None, end_i=None, shifted=True):
+        """
+        Crop the elongation by index
+
+        :param start_i: index at which to start
+        :param end_i: index at which to end
+        :param shifted: shift the x-values so that they start at 0
+        """
+        xs = self.xs[start_i:end_i]
+        ys = self.ys[start_i:end_i]
+
+        if shifted:
+            xs = xs - xs[0]
+
+        return self.__class__(xs, ys, self.gauge_length, self.sample_width, self.sample_thickness, self.name)
+
+    def cleaned(self, start_threshold=0.01, end_threshold=0.25, shifted=True):
+        """
+        Remove the slack at the beginning and post-break at the end.
+
+        :param start_threshold: threshold of max for starting
+        :param end_threshold: threshold of max for break
+        """
+        start_i, end_i = None, None
+
+        max_i = np.argmax(self.ys)
+        max_y = self.ys[max_i]
+
+        if start_threshold is not None:
+            for i, y in enumerate(self.ys[max_i:], start=max_i):
+                if y > max_y*start_threshold:
+                    start_i = i
+                    break
+
+        if end_threshold is not None:
+            for i, y in enumerate(self.ys[max_i:], start=max_i):
+                if y < max_y*end_threshold:
+                    end_i = i
+                    break
+
+        return self.cropped_index(start_i, end_i, shifted)
 
     @property
     def youngs_modulus(self, x_limit=None):
@@ -91,7 +149,7 @@ class Elongation:
         if x_limit is not None:
             raise NotImplementedError('Limits on x not yet implemented, see youngs_modulus_array()')
 
-        return self.youngs_modulus_array.max()
+        return max(self.youngs_modulus_array)
 
     @property
     def youngs_modulus_array(self):
@@ -100,130 +158,81 @@ class Elongation:
 
         :return: Young's modulus array (units of Pa)
         """
-        assert self.x_units == 'strain'
-        assert self.y_units == 'N'
+        return self.derivative()/self.cross_section  # N/L·ΔL * A
 
-        return self.derivative()*self.cross_section  # N/L·ΔL * A
-
-    @property
-    def cross_section(self):
+    def derivative(self):
         """
-        Cross sectional area of the material.
-        """
-        return self.sample_thickness*self.sample_width
-
-    def derivative(self, units='N/strain'):
-        """
-        Take the derivative of the curve, first converts to the corresponding units.
-
-        :param units: units to be used. Derivative is with respect to numerator and denominator.
         :return: derivative
         """
-        if units == 'N/strain':
-            assert (self.x_units == 'strain') and (self.y_units == 'N')
-            return np.diff(self.ys)/np.diff(self.xs)  # N/L·ΔL
+        return np.diff(self.ys)/np.diff(self.xs)  # N/L·ΔL
 
-    def cropped(self, start, end):
+
+    def peaks(self, **kwargs):
         """
-        Crop the elongation by x-value
-
-        :param start: x-value at which to start
-        :param end: x-value at which to end
-        :return: cropped Elongation object
-        """
-        start_i = self.xs.index(start) if not start is None else None
-        end_i = self.xs.index(end) if not end is None else None
-
-        return self.cropped_index(start_i, end_i)
-
-    def cropped_index(self, start_i=None, end_i=None):
-        """
-        Crop the elongation by index
-
-        :param start: x-value at which to start
-        :param end: x-value at which to end
-        """
-        elong = Elongation(**self.__dict__)
-        elong.xs = self.xs[start_i:end_i]
-        elong.ys = self.ys[start_i:end_i]
-        return elong
-
-    def cleaned(self, start_threshold=None, end_threshold=0.25):
-        """
-        Remove the slack at the beginning and post-break at the end.
-
-        :param start_threshold: threshold for starting, ignores if False
-        :param end_threshold: threshold for break, ignores if False
-        """
-        if not start_threshold is None:
-            raise NotImplementedError('Start_threshold is not yet implemented')
-
-        start_i = None
-
-        max_i = np.argmax(self.ys)
-        max_x, max_y = self.xs[max_i], self.max_ys[max_i]
-        end_i = bisect(self.ys, 0.25*max_y, lo=max_i) if not end_threshold is None else None
-
-        return self.cropped_index(start_i, end_i)
-
-    def peaks(self, indices=False, height=None, threshold=None, distance=None,
-              prominence=None, width=None, wlen=None, rel_height=None, plateau_size=None):
-        """
-        Finds the indices of peaks in the elongation.
+        Finds the location of peaks in the elongation.
 
         Utilizes scipy.signal.find_peaks and the parameters therein.
 
-        :param indices: return peak indices instead of x-values
-        :return: peak x-values (or peak indices if indices == True), properties
+        :param **kwargs: kwargs for scipy.signal.find_peaks
+        :return: peak x-values, properties
         """
-        peaks, properties = signal.find_peaks(
-            self.stress, height, threshold, distance, prominence, width, wlen,
-            rel_height, plateau_size
-        )
+        peaks, properties = self.peak_indices(**kwargs)
+        return self.xs[peaks], properties
 
-        if indices:
-            return peaks, properties
-        return self.strain[peaks], properties
-
-    def break1(self, **kwargs):
+    def peak_indices(self, **kwargs):
         """
-        Determine the location and force at break.
+        Finds the location of peaks in the elongation.
+
+        Utilizes scipy.signal.find_peaks and the parameters therein.
+
+        :param **kwargs: kwargs for scipy.signal.find_peaks
+        :return: peak indices, properties
+        """
+        kwarg_defaults = {
+            'width':5,  # ensure small spikes are ignored
+        }
+        kwarg_defaults.update(kwargs)
+        return signal.find_peaks(self.ys, **kwarg_defaults)
+
+    def break_index(self, **kwargs):
+        """
+        Determine the strain index of break.
+
+        Break is defined herein as the last peak in the stress/strain curve.
 
         :param **kwargs: see peaks()
-        :return: stress, strain of break
+        :return: index of break
         """
-        index = self.peaks(indices=True, **kwargs)[0][-1]
-        return self.strain[index], self.stress[index]
+        return self.peak_indices(**kwargs)[0][-1]
 
-    def break1_elongation(self, **kwargs):
-        return self.break1(threshold)[0]
+    def break_elongation(self, **kwargs):
+        return self.xs[self.break_index(**kwargs)]
 
-    def break1_load(self, **kwargs):
-        return self.break1(threshold)[1]*self.cross_section
+    def break_load(self, **kwargs):
+        return self.ys[self.break_index(**kwargs)]
 
-    def break1_strength(self, **kwargs):
-        return self.break1_load(**kwargs)
+    def break_strength(self, **kwargs):
+        return self.break_load(**kwargs)/self.cross_section
 
-    def yield1(self, **kwargs):
+    def yield_index(self, **kwargs):
         """
         Determine the location and force at yield.
 
-        Yield is defined as the first peak in the stress/strain curve.
+        Yield is defined herein as the first peak in the stress/strain curve.
 
         :param **kwargs: see peaks()
-        :return: stress, strain of yield
+        :return: index of yield
         """
-        index = self.peaks(indices=True, **kwargs)[0][0]
-        return self.strain[index], self.stress[index]
+        return self.peak_indices(**kwargs)[0][0]
 
     def yield_elongation(self, **kwargs):
-        return self.yield1(threshold)[0]
+        return self.xs[self.yield_index(**kwargs)]
 
     def yield_load(self, **kwargs):
-        return self.yield1(threshold)[1]*self.cross_section
+        return self.ys[self.yield_index(**kwargs)]
 
     def yield_strength(self, **kwargs):
-        return self.yield1(threshold)[1]
+        return self.yield_load(**kwargs)/self.cross_section
 
 
 def write_elongation(elongation, file_name, style=None):
@@ -239,7 +248,7 @@ def write_elongation(elongation, file_name, style=None):
     if style == 'csv':
         write_csv(elongation, file_name)
     elif style == 'prn':
-        write_prn(elongation, file_name)
+        raise NotImplementedError()
     else:
         raise NotImplementedError()
 
@@ -252,112 +261,23 @@ def write_csv(elongation, file_name):
     :param file_name: name of the file to be written to
     """
     e = elongation
+
     with open(file_name, 'w') as f:
-        f.write("""\
-Thickness, {thickness}
-Break Load, {break_load}
-Break Strength, {break_strength}
-Break Elongation, {break_elongation}
-Crosshead Speed, {crosshead_speed}
-Gauge Length, {gauge_length}
-Sample Width, {sample_width}
-Sample Thickness, {sample_thickness}
-Yield Strength, {yield_strength}
-Yield Load, {yield_load}
+        f.write(f"""\
+Break Load, {e.break_load()}
+Break Strength, {e.break_strength()}
+Break Elongation, {e.break_elongation()}
+Yield Load, {e.yield_load()}
+Yield Strength, {e.yield_strength()}
+Yield Elongation, {e.yield_elongation()}
+Gauge Length, {e.gauge_length}
+Sample Width, {e.sample_width}
+Sample Thickness, {e.sample_thickness}
 
 Points
-{x_units:^8},{y_units:^8}
-""".format(x_units=e.x_units, y_units=e.y_units, **e.data))
+   mm       N""")
         for x, y in zip(e.xs, e.ys):
-            f.write(f'{x:>8.4f}, {y:>8.4f}\n')
-
-def write_prn(elongation, file_name):
-    """
-    Write Elongation object to a prn file.
-
-    :param: Elongation object
-    :param file_name: name of the file to be written to
-    """
-    e = elongation
-    with open(file_name, 'w') as f:
-        f.write("""prn:13|
-subtype = MT2500
-Doc={MT2500:14|
-  Film={12.1|
-""" +
-"""\
-    Test_Mode = {Test_Mode}
-    Setup_Name = {Setup_Name}
-    Unit_System = {Unit_System}
-    Graph_Mode = {Graph_Mode}
-    Sample_Length = {Sample_Length}
-    CrossheadVlcty = {CrossheadVlcty}
-    VelocityUnitId = {VelocityUnitId}
-    CrossheadSpeed = {CrossheadSpeed}
-    Loadcell_Mode = {Loadcell_Mode}
-    Loadcell_Type = {Loadcell_Type}
-    Start_Threshold = {Start_Threshold}
-    Stop_Threshold = {Stop_Threshold}
-    Auto_Stop = {Auto_Stop}
-    Auto_Return = {Auto_Return}
-    ExtnsnResetOnStart = {ExtnsnResetOnStart}
-    Yield_Type = {Yield_Type}
-    COF_Sled_Load = {COF_Sled_Load}
-    }}
-""".format(**e.data['film_data']) +
-"""\
-  Test_Info={{2|
-    Color = {Color}
-    Order_Id = {Order_Id}
-    Technician = {Technician}
-    Test_Method = {Test_Method}
-    Sample_Conditioning = {Sample_Conditioning}
-    Test_Conditions = {Test_Conditions}
-    Product_Name = {Product_Name}
-    Test_Direction = {Test_Direction}
-    }}
-""".format(**e.data['test_info']) +
-"""\
-  Test_Data=(
-    {{6|
-      Crosshead_speed = {crosshead_speed}
-      X_unit = {x_units}
-      Y_unit = {y_units}
-      Sample_Thkness = {sample_thickness}
-      Sample_Width = {sample_width}
-      Grip_Separation = {gauge_length}
-      Start_Threshhold = {start_threshhold}
-      Stop_Threshhold = {stop_threshhold}
-      Number_Of_Points = {number_of_points}
-      Points = [""".format(number_of_points=len(e.xs), x_units=e.x_units, y_units=e.y_units, **e.data) +
-''.join(f'   {x:> 8.4f}, {y:> 8.4f}\n' for x, y in zip(e.xs, e.ys)) +
-"""\
-         ]
-      }},
-    )
-  Test_Results=(
-    {{6|
-      TestDate = {date}
-      Length_Cnvrsn = {length_conversion}
-      Force_Cnvrsn = {force_conversion}
-      LoadCell_Capacity = {loadcell_capacity}
-      LoadCell_CpctyUnit = {loadcell_capacity_unit}
-      LoadCell_BitsOfReso = {loadcell_bits_of_resolution}
-      Analysis={{ATensile:1|
-        Slack_time = {slack_time}
-        SampleThickness = {sample_thickness}
-        BreakLoad = {break_load}
-        BreakStrength = {break_strength}
-        BreakElongation = {break_elongation}
-        BreakPctElongation = {break_percent_elongation}
-        YieldStrength1 = {yield_strength}
-        YieldLoad1 = {yield_load}
-        }}
-      }},
-    )
-  }}
-""".format(**e.data)
-)
+            f.write(f'\n{x:>8.4f}, {y:>8.4f}')
 
 
 def read_elongations(file_names):
@@ -589,7 +509,16 @@ Doc={MT2500:14|
         if results['date']:
             results['date'] = datetime.strptime(results['date'], '%d %b, %Y')
 
-        elongations.append(Elongation(**data, **results, film_data=film_data, test_info=test_info))
+        xs = data['xs']*float(data['crosshead_speed'])
+        elongations.append(
+            Elongation(
+                xs, data['ys'],
+                float(data['gauge_length']),
+                float(data['sample_width']),
+                float(data['sample_thickness']),
+                None
+            )
+        )
 
     return elongations
 
@@ -622,13 +551,18 @@ def read_csv(file_name):
             ys.append(float(y.strip()))
         data['xs'], data['ys'] = xs, ys
 
-    return [Elongation(**data)]
+    elong = Elongation(
+        data['xs'], data['ys'],
+        float(data['gauge_length']),
+        float(data['sample_width']),
+        float(data['sample_thickness'])
+    )
+    return [elong]
 
 
 if __name__ == "__main__":
     elongs = read_prn('../test/test_files/test1.prn')
     elongs = read_elongation('../test/test_files/test1.prn')
     elong = elongs[0]
-    elong.convert_x_units_to_strain()
     elong.write('a.csv')
     open('a.out', 'w').write(str(elong.__dict__))

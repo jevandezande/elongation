@@ -89,7 +89,7 @@ def plot_elongation(elong, style, ax, marker=None, linestyle=None, color=None):
     )
 
 
-def setup_axis(ax, style, title=None,
+def setup_axis(ax, style='stress/strain', title=None,
                xlim=None, xticks=None, xticks_minor=True, xlabel=None,
                ylim=None, yticks=None, yticks_minor=True, ylabel=None
 ):
@@ -111,7 +111,7 @@ def setup_axis(ax, style, title=None,
 
     backwards = True
 
-    if 'stress/strain':
+    if style == 'stress/strain':
         if xlim:
             xticks = up(xticks, make_ticks(*xlim, 50))
         xlabel = up(xlabel, 'Strain (%)')

@@ -1,13 +1,12 @@
-Thickness, 1.0
 Break Load, 16.901
 Break Strength, 16900.9524
 Break Elongation, 77.8917
-Crosshead Speed, 0.787
+Yield Load, 5.2
+Yield Strength, 5199.9639
+Yield Elongation, 5199.9639
 Gauge Length, 6.0
 Sample Width, 1.0
 Sample Thickness, 1.0
-Yield Strength, 5199.9639
-Yield Load, 5.2
 
 Points
    s    ,   N    

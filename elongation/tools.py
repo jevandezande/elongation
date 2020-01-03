@@ -73,3 +73,8 @@ def smooth_curve(ys, box_pts=True):
 
     box = np.ones(box_pts) / box_pts
     return np.convolve(ys, box, mode='same')
+
+def linear_index(val, vals, after=True):
+    """
+    Determine the index of the first item greater than val
+    """
