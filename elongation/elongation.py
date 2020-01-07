@@ -68,7 +68,7 @@ class Elongation:
 
         :return: stress, max_strain
         """
-        max_i = np.argmax(self.ys)
+        max_i = np.nanargmax(self.ys)
         return self.xs[max_i], self.ys[max_i]
 
     @property
@@ -140,7 +140,7 @@ class Elongation:
         """
         start_i, end_i = None, None
 
-        max_i = np.argmax(self.ys)
+        max_i = np.nanargmax(self.ys)
         max_y = self.ys[max_i]
 
         if start_threshold is not None:

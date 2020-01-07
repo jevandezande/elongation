@@ -13,7 +13,7 @@ def plotter(
     ylim=None, yticks=None, yticks_minor=True, ylabel=None,
     smoothed=False,
     legend=True, colors=None, markers=None, linestyles=None,
-    peaks=False,
+    peaks=False, youngs_modulus=False,
     savefig=None,
 ):
     """
@@ -29,6 +29,7 @@ def plotter(
     :param markers: markers to plot the spectra
     :param linestyles: linestyles to plot the spectra
     :param peaks: dictionary of peak picking parameters
+    :param youngs_modulus: dictionary of Young's modulus picking parameters
     :param savefig: where to save the figure
     :return: figure and axes
     """
@@ -42,7 +43,7 @@ def plotter(
     if smoothed:
         elongs = [elong.smoothed(smoothed) for elong in elongs]
 
-    plot_elongations(elongs, ax, style, markers=markers, linestyles=linestyles, colors=colors, peaks=peaks)
+    plot_elongations(elongs, ax, style, markers=markers, linestyles=linestyles, colors=colors, peaks=peaks, youngs_modulus=youngs_modulus)
 
     if legend:
         ax.legend()
@@ -53,7 +54,7 @@ def plotter(
     return fig, ax
 
 
-def plot_elongations(elongs, ax, style='stress/strain', markers=None, linestyles=None, colors=None, peaks=False):
+def plot_elongations(elongs, ax, style='stress/strain', markers=None, linestyles=None, colors=None, peaks=False, youngs_modulus=False):
     """
     Plot Elongations on an axis.
 
@@ -64,16 +65,18 @@ def plot_elongations(elongs, ax, style='stress/strain', markers=None, linestyles
     :param linestyles: the styles of line to use
     :param colors: the colors to use
     :param peaks: dictionary of peak picking parameters
+    :param youngs_modulus: dictionary of Young's modulus picking parameters
+    :return: figure and axes
     """
     colors = cycle_values(colors)
     markers = cycle_values(markers)
     linestyles = cycle_values(linestyles)
 
     for elong, color, marker, linestyle in zip(elongs, colors, markers, linestyles):
-        plot_elongation(elong, ax, style, marker=marker, linestyle=linestyle, color=color, peaks=peaks)
+        plot_elongation(elong, ax, style, marker=marker, linestyle=linestyle, color=color, peaks=peaks, youngs_modulus=youngs_modulus)
 
 
-def plot_elongation(elong, ax, style='stress/strain', marker=None, linestyle=None, color=None, peaks=False):
+def plot_elongation(elong, ax, style='stress/strain', marker=None, linestyle=None, color=None, peaks=False, youngs_modulus=False):
     """
     Plot an Elongation on an axis
 
@@ -84,6 +87,7 @@ def plot_elongation(elong, ax, style='stress/strain', marker=None, linestyle=Non
     :param linestyle: the style of line to use
     :param color: the color to use
     :param peaks: dictionary of peak picking parameters
+    :param youngs_modulus: dictionary of Young's modulus picking parameters
     """
     ax.plot(
         elong.xs, elong.ys,
@@ -93,26 +97,55 @@ def plot_elongation(elong, ax, style='stress/strain', marker=None, linestyle=Non
 
     if peaks:
         peak_defaults = {
+            'color': color,
             'format': '3.0f',
             'labels': True,
-            'marks': 'x',
+            'marker': 'x',
             'print': True,
         }
         peaks = peak_defaults if peaks is True else {**peak_defaults, **peaks}
         peak_indices, _ = elong.peak_indices()
         peak_xs, peak_ys = elong.xs[peak_indices], elong.ys[peak_indices]
 
-        if peaks['marks']:
-            ax.scatter(peak_xs, peak_ys, color=color, marker=peaks['marks'])
+        if peaks['marker']:
+            ax.scatter(peak_xs, peak_ys, color=peaks['color'], marker=peaks['marker'])
 
         if peaks['labels']:
             for x, y in zip(peak_xs, peak_ys):
                 ax.text(x, y, f'{{:{peaks["format"]}}}'.format(x), verticalalignment='bottom')
 
         if peaks['print']:
+            print('Peaks')
             print('   X       Y')
             for x, y in zip(peak_xs, peak_ys):
-                print(f'{x:>6.1f}  {y:>6.1f}')
+                print(f'{x:>6.1f} {y:>6.1f}')
+
+    if youngs_modulus:
+        youngs_modulus_defaults = {
+            'color': color,
+            'format': '4.1f',
+            'labels': True,
+            'tangent': True,
+            'marker': 'x',
+            'print': True,
+        }
+        youngs_modulus = youngs_modulus_defaults if youngs_modulus is True else {**youngs_modulus_defaults, **youngs_modulus}
+        idx = np.nanargmax(elong.youngs_modulus_array)
+        x, y, ym = elong.xs[idx], elong.ys[idx], elong.youngs_modulus_array[idx]
+
+        if youngs_modulus['marker']:
+            ax.scatter(x, y, color=youngs_modulus['color'], marker=youngs_modulus['marker'])
+
+        if youngs_modulus['tangent']:
+            xs = [0, 2*x]
+            ys = [y - ym*x, y + ym*x]
+            ax.plot(xs, ys, color=youngs_modulus['color'])
+
+        if youngs_modulus['labels']:
+            ax.text(x, y, f'{{:{youngs_modulus["format"]}}}'.format(x), verticalalignment='bottom')
+
+        if youngs_modulus['print']:
+            print(f'Modulus: {ym:5.1f} ({x:5.1f}, {y:5.1f})')
 
 
 def setup_axis(

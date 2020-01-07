@@ -18,6 +18,8 @@ parser.add_argument('-s', '--save', help='Where to save the figure.',
                     type=str, default=False)
 parser.add_argument('--title', help='Figure Title',
                     type=str, default=None)
+parser.add_argument('-m', '--modulus', help='Plot the modulus.',
+                    default=True, action='store_true')
 parser.add_argument('-n', '--name', help='The name(s) of the files to be read.',
                     type=str, nargs='+', default='{autogenerate}')
 parser.add_argument('-c', '--clean', help='Parameters for cleaning the plots.',
@@ -41,6 +43,7 @@ fig, ax = plotter(
     title=args.title,
     smoothed=False,
     peaks=args.peaks,
+    youngs_modulus=args.modulus,
     savefig=args.save,
 )
 
