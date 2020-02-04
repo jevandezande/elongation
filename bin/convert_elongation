@@ -18,6 +18,9 @@ args = parser.parse_args()
 
 for inp in args.input:
     for file_name in glob(inp):
-        elong = read_elongation(file_name)[0]
-        new_name = f"{'.'.join(inp.split('.')[:-1])}.{args.style}"
-        elong.write(new_name)
+        base_name, extension = file_name.rsplit('.', 1)
+        elongs = read_elongation(file_name)
+        for i, elong in enumerate(elongs, start=1):
+            number = f'-{i}' if len(elongs) > 1 else ''
+            new_name = f'{base_name}{number}.{args.style}'
+            elong.write(new_name)
