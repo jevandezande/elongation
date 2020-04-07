@@ -44,7 +44,6 @@ def test_read_csv(tmp_path):
 
     outfile = f'{tmp_path}/test1_write.csv'
     elong.write(outfile)
-    #assert open(outfile).read() == open(infile).read()
 
 
 def test_eq():
@@ -93,6 +92,7 @@ def test_cleaned():
     assert len(elong.cleaned(0.01, None).xs) == 2334
     assert len(elong.cleaned(None, 0.5).xs) == 2337
     assert len(elong.cleaned(None, 0.9).xs) == 2331
+
 
 def test_peaks():
     elong = read_prn('tests/test_files/test1.prn')[0]

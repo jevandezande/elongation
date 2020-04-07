@@ -43,7 +43,11 @@ def plotter(
     if smoothed:
         elongs = [elong.smoothed(smoothed) for elong in elongs]
 
-    plot_elongations(elongs, ax, style, markers=markers, linestyles=linestyles, colors=colors, peaks=peaks, youngs_modulus=youngs_modulus)
+    plot_elongations(
+        elongs, ax, style,
+        markers=markers, linestyles=linestyles, colors=colors,
+        peaks=peaks, youngs_modulus=youngs_modulus
+    )
 
     if legend:
         ax.legend()
@@ -54,7 +58,11 @@ def plotter(
     return fig, ax
 
 
-def plot_elongations(elongs, ax, style='stress/strain', markers=None, linestyles=None, colors=None, peaks=False, youngs_modulus=False):
+def plot_elongations(
+    elongs, ax, style='stress/strain',
+    markers=None, linestyles=None, colors=None,
+    peaks=False, youngs_modulus=False
+):
     """
     Plot Elongations on an axis.
 
@@ -73,10 +81,18 @@ def plot_elongations(elongs, ax, style='stress/strain', markers=None, linestyles
     linestyles = cycle_values(linestyles)
 
     for elong, color, marker, linestyle in zip(elongs, colors, markers, linestyles):
-        plot_elongation(elong, ax, style, marker=marker, linestyle=linestyle, color=color, peaks=peaks, youngs_modulus=youngs_modulus)
+        plot_elongation(
+            elong, ax, style,
+            marker=marker, linestyle=linestyle, color=color,
+            peaks=peaks, youngs_modulus=youngs_modulus
+        )
 
 
-def plot_elongation(elong, ax, style='stress/strain', marker=None, linestyle=None, color=None, peaks=False, youngs_modulus=False):
+def plot_elongation(
+    elong, ax, style='stress/strain',
+    marker=None, linestyle=None, color=None,
+    peaks=False, youngs_modulus=False
+):
     """
     Plot an Elongation on an axis
 
@@ -121,7 +137,7 @@ def plot_elongation(elong, ax, style='stress/strain', marker=None, linestyle=Non
                 print(f'{x:>6.1f} {y:>6.1f}')
 
     if youngs_modulus:
-        youngs_modulus_defaults = {
+        youngs_modulus_def = {
             'color': color,
             'format': '4.1f',
             'labels': True,
@@ -129,7 +145,7 @@ def plot_elongation(elong, ax, style='stress/strain', marker=None, linestyle=Non
             'marker': 'x',
             'print': True,
         }
-        youngs_modulus = youngs_modulus_defaults if youngs_modulus is True else {**youngs_modulus_defaults, **youngs_modulus}
+        youngs_modulus = youngs_modulus_def if youngs_modulus is True else {**youngs_modulus_def, **youngs_modulus}
         idx = np.nanargmax(elong.youngs_modulus_array)
         x, y, ym = elong.xs[idx], elong.ys[idx], elong.youngs_modulus_array[idx]
 
