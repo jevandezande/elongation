@@ -26,6 +26,8 @@ parser.add_argument('-c', '--clean', help='Parameters for cleaning the plots.',
                     type=float, nargs='+', default=[0.01, 0.25])
 parser.add_argument('-p', '--peaks', help='Label the most prominent peaks with their location.',
                     default=False, action='store_true')
+parser.add_argument('-v', '--verbose', help='Print details about each elongation.',
+                    default=False, action='store_true')
 
 args = parser.parse_args()
 
@@ -37,6 +39,14 @@ for elong, name in zip(elongs, names):
     elong.name = name
 
 elongs = [elong.cleaned(*args.clean) for elong in elongs]
+
+if args.verbose:
+    print('Yield E  Yield Strength | Peak E  Peak Strength | Break E Break Strength')
+    print('------------------------------------------------------------------------')
+    for elong in elongs:
+        print(f'{elong.yield_elongation():5.1f}  {elong.yield_strength():5.1f} |' +
+              f'{elong.max[0]:5.1f}' + ' {elong.max[1]*elong.cross_section():5.1f} | ' +
+              f'{elong.break_elongation():5.1f} {elong.yield_strength():5.1f}')
 
 fig, ax = plotter(
     elongs,
