@@ -19,8 +19,8 @@ class Elongation:
         """
         assert len(xs) == len(ys)
 
-        self.xs = xs
-        self.ys = ys
+        self.xs = np.array(xs)
+        self.ys = np.array(ys)
         self.gauge_length = gauge_length
         self.sample_width = sample_width  # mm
         self.sample_thickness = sample_thickness  # mm
@@ -295,7 +295,7 @@ Sample Width, {e.sample_width}
 Sample Thickness, {e.sample_thickness}
 
 Points
-   mm       N""")
+   mm,       N""")
         for x, y in zip(e.xs, e.ys):
             f.write(f'\n{x:>8.4f}, {y:>8.4f}')
 
@@ -552,27 +552,32 @@ def read_csv(file_name):
     """
     data = {}
     with open(file_name) as f:
-        for line in f:
-            if not line.strip():
-                continue
-            if line == 'Points\n':
-                break
-            key, val = read_key_value(line, separator=',')
-            key = key.lower().replace(' ', '_')
-            data[key] = val
+        f = MyIter(f)
+        try:
+            for line in f:
+                if not line.strip():
+                    continue
+                if line == 'Points\n':
+                    break
+                key, val = read_key_value(line, separator=',')
+                key = key.lower().replace(' ', '_')
+                data[key] = val
 
-        x_units, y_units = f.readline().split(',')
-        data['x_units'], data['y_units'] = x_units.strip(), y_units.strip()
+            x_units, y_units = next(f).split(',')
+            data['x_units'], data['y_units'] = x_units.strip(), y_units.strip()
 
-        xs, ys = [], []
-        for line in f:
-            x, y = line.split(',')
-            xs.append(float(x.strip()))
-            ys.append(float(y.strip()))
-        data['xs'], data['ys'] = xs, ys
+            xs, ys = [], []
+            for line in f:
+                x, y = line.split(',')
+                xs.append(float(x.strip()))
+                ys.append(float(y.strip()))
+        except Exception as e:
+            print(f'Error on line {f._index}')
+            print(f._line)
+            raise e
 
     elong = Elongation(
-        data['xs'], data['ys'],
+        np.array(xs), np.array(ys),
         float(data['gauge_length']),
         float(data['sample_width']),
         float(data['sample_thickness'])
