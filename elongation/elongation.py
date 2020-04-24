@@ -15,15 +15,18 @@ class Elongation:
 
         :param xs: elongation (in units of strain)
         :param ys: force (in Newtons)
+        :param gauge_length: length of sample (in meters)
+        :param sample width: width of sample (in meters)
+        :param sample_thickness: thickness of sample (in meters)
         :param name: optional name for the Elongation
         """
         assert len(xs) == len(ys)
 
         self.xs = np.array(xs)
         self.ys = np.array(ys)
-        self.gauge_length = gauge_length
-        self.sample_width = sample_width  # mm
-        self.sample_thickness = sample_thickness  # mm
+        self.gauge_length = gauge_length  # m
+        self.sample_width = sample_width  # m
+        self.sample_thickness = sample_thickness  # m
         self.name = name
 
     def __eq__(self, other):
@@ -76,9 +79,9 @@ class Elongation:
         """
         Cross sectional area of the material.
 
-        :return: cross_section in mm^2
+        :return: cross_section in m²
         """
-        return self.sample_thickness*self.sample_width  # mm^2
+        return self.sample_thickness*self.sample_width # m x m = m²
 
     def smoothed(self, box_pts=True):
         """
@@ -179,13 +182,13 @@ class Elongation:
 
         :return: Young's modulus array (units of Pa)
         """
-        return self.derivative()/self.cross_section  # N/L·ΔL * A
+        return self.derivative()/self.cross_section  # N/ΔL · L₀/A
 
     def derivative(self):
         """
         :return: derivative
         """
-        return np.diff(self.ys)/np.diff(self.xs)  # N/L·ΔL
+        return np.diff(self.ys)/np.diff(self.xs)  # ΔN/ΔL · L₀
 
     def peaks(self, **kwargs):
         """
@@ -295,7 +298,7 @@ Sample Width, {e.sample_width}
 Sample Thickness, {e.sample_thickness}
 
 Points
-   mm,       N""")
+   %,       N""")
         for x, y in zip(e.xs, e.ys):
             f.write(f'\n{x:>8.4f}, {y:>8.4f}')
 
@@ -533,9 +536,9 @@ Doc={MT2500:14|
         elongations.append(
             Elongation(
                 xs, data['ys'],
-                float(data['gauge_length']),
-                float(data['sample_width']),
-                float(data['sample_thickness']),
+                float(data['gauge_length']) / 1e3,  # mm → m
+                float(data['sample_width']) / 1e3,  # mm → m
+                float(data['sample_thickness']) / 1e3,  # mm → m
                 None
             )
         )

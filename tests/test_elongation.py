@@ -18,21 +18,21 @@ def test_read():
 def test_read_prn():
     e0, e1, e2 = read_prn('tests/test_files/test1.prn')
 
-    assert e0.sample_thickness == 1.000
-    assert e0.sample_width == 1.000
-    assert e0.gauge_length == 6.000
+    assert e0.sample_thickness == 0.01
+    assert e0.sample_width == 0.01
+    assert e0.gauge_length == 0.06
     assert len(e0.xs) == 2344
     assert len(e0.xs) == len(e0.ys)
 
-    assert e1.sample_thickness == 1.000
-    assert e1.sample_width == 1.000
-    assert e1.gauge_length == 60.000
+    assert e1.sample_thickness == 0.01
+    assert e1.sample_width == 0.01
+    assert e1.gauge_length == 0.06
     assert len(e1.xs) == 73
     assert len(e1.xs) == len(e1.ys)
 
-    assert e2.sample_thickness == 1.000
-    assert e2.sample_width == 1.000
-    assert e2.gauge_length == 60.000
+    assert e2.sample_thickness == 0.01
+    assert e2.sample_width == 0.01
+    assert e2.gauge_length == 0.06
     assert len(e2.xs) == 65
     assert len(e2.xs) == len(e2.ys)
 
@@ -61,7 +61,7 @@ def test_copy():
 
 def test_cross_section():
     elong = read_prn('tests/test_files/test1.prn')[0]
-    assert elong.cross_section == 1
+    assert elong.cross_section == 0.0001
 
 
 def test_smoothed():
@@ -107,13 +107,13 @@ def test_youngs_modulus_array():
     elong = read_prn('tests/test_files/test1.prn')[0]
     for val in elong.youngs_modulus_array:
         if val is np.nan:
-            print(9)
-    aae(elong.youngs_modulus_array[:7], [0, 0.4067902, 0, 0, 0, 0.5543513, 0])
+            pass
+    aae(elong.youngs_modulus_array[:7], [0, 4067.9019681, 0, 0, 0, 5543.5134664, 0])
 
 
 def test_youngs_modulus():
     elong = read_prn('tests/test_files/test1.prn')[0]
-    aae(elong.youngs_modulus, 1.4498419835141907)
+    aae(elong.youngs_modulus, 14498.419835141907)
 
 
 def test_break():
